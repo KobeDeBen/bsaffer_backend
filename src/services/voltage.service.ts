@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
 import { InfluxDB, QueryApi } from '@influxdata/influxdb-client';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class TempServiceService {
+export class VoltageService {
     private influxDB: InfluxDB;
     private queryApi: QueryApi;
 
@@ -14,25 +14,27 @@ export class TempServiceService {
         this.queryApi = this.influxDB.getQueryApi(org);
     }
 
-    async getData(): Promise<any[]> {
+    async getVoltage(): Promise<any[]> {
         // Customize your Flux query as needed
-        const fluxQuery = `from(bucket:"${"B-SAFFER_data"}") |> range(start: -1h)`;
+        const fluxQuery = `from(bucket:"B-SAFFER_data") 
+                            |> range(start: -5h) 
+                            |> filter(fn: (r) => r._field == "voltage")`;
         const results: any[] = [];
         return new Promise((resolve, reject) => {
-          this.queryApi.queryRows(fluxQuery, {
+        this.queryApi.queryRows(fluxQuery, {
             next(row, tableMeta) {
-              const o = tableMeta.toObject(row);
-              results.push(o);
-              console.log(o)
+            const o = tableMeta.toObject(row);
+            results.push(o);
+            console.log(o)
             },
             error(error) {
-              console.error('Query error:', error);
-              reject(error);
+            console.error('Query error:', error);
+            reject(error);
             },
             complete() {
-              resolve(results);
+            resolve(results);
             },
-          });
+        });
         });
     }
 }
